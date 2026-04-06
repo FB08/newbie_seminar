@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Todo } from '../../App.tsx'
+import type { Todo } from '../App.tsx'
 import Button from './Button.tsx'
 
 type ModalProps = {

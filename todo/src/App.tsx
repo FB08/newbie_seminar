@@ -1,5 +1,8 @@
 // imoprt 영역
 import { useState, useRef } from "react";
+import Button from "./components/Button";
+import TodoListBox from "./components/TodoListBox";
+import Modal from "./components/Modal";
 
 // type 정의 영역
 export type Todo = {
@@ -57,12 +60,25 @@ function App(){
 
       <main>
         <div>
-          
+          <Button label="추가" color='dark green' onClick={() => openModal('add')} />
+          <TodoListBox 
+            todos={todos} 
+            onEditClick={(id) => openModal('edit', todos.find(todo => todo.id === id))} 
+            onDeleteClick={id => openModal('delete', todos.find(todo => todo.id === id))}/>
+          {modalType && (
+            <Modal
+              modalType={modalType}
+              selectedTodo={selectedTodo}
+              onClose={closeModal}
+              onAdd={addTodo}
+              onEdit={editTodo}
+              onDelete={deleteTodo}
+            />
+          )}
         </div>
       </main>
     </>
   )
 
 }
-
-export default App;
+export default App

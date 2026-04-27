@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Todo } from '../App.tsx'
 import Button from './Button.tsx'
+import '../index.css'
 
 type ModalProps = {
     modalType: 'add' | 'edit' | 'delete' | null
@@ -23,7 +24,7 @@ function Modal({ modalType, selectedTodo, onClose, onAdd, onEdit, onDelete } : M
     }, [modalType])
 
     return (
-        <div>
+        <div className="modal">
             {modalType === 'add' && (
                 <div>
                     <h1>추가</h1>

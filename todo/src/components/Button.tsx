@@ -6,7 +6,7 @@ type ButtonProps = {
 
 function Button({ label, color, onClick} : ButtonProps ){
     return (
-        <button style={{color}} onClick={onClick}>{label}</button>
+        <button style={{color, backgroundColor: 'rgb(204, 121, 149)'}} onClick={onClick}>{label}</button>
     )
 }
 

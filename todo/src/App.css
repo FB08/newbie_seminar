@@ -17,6 +17,10 @@
   }
 }
 
+header h1{
+  text-align: left;
+}
+
 .hero {
   position: relative;
 

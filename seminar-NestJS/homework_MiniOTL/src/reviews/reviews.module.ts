@@ -35,5 +35,18 @@ import { LecturesModule } from 'src/lectures/lectures.module';
 // =============================================================================
 @Module({
   // TODO: 여기에 providers, imports, exports, controllers를 설정하세요.
+  providers: [ 
+    ReviewsService,
+    ReportsService
+  ],
+  imports: [
+    PrismaModule,
+    forwardRef(() => CoursesModule),
+    LecturesModule
+  ],
+  exports: [ReviewsService],
+  controllers: [ReviewsController]
 })
-export class ReviewsModule { }
+export class ReviewsModule {
+
+ }

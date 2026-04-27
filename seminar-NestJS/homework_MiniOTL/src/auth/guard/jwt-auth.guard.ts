@@ -47,6 +47,38 @@ export class JwtAuthGuard extends AuthGuard(['jwt', 'refresh']) implements CanAc
   // ===========================================================================
   async canActivate(context: ExecutionContext): Promise<boolean> {
     // TODO: 여기에 Guard 로직을 구현하세요.
-    return false;
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [context.getHandler(), context.getClass()]);
+
+    const request = context.switchToHttp().getRequest();
+    const response = context.switchToHttp().getResponse();
+
+    try{
+      const result = await super.canActivate(context);
+      if (!result) return isPublic;
+      
+      const user = request.user;
+      if (user && 'access' in user){
+        const { access, ...newPayload } = user as TokenRefreshPayload;
+        request.user = newPayload;
+        response.cookie('jwt', access.token, access.options); // 로그인 연장 개념?
+      }
+      return true;
+    } catch(err){
+      if (err instanceof RefreshTokenInvalidException){
+        throw new UnauthorizedException('다시 로그인 해 주세요.');
+      }
+
+      if (isPublic) return true;
+
+      throw err
+    }
   }
 }
+
+
+
+// this.reflecter: NestJS의 기본 문법. 메타데이터를 읽어옴
+// getAllAndOverride<boolean>(키 이름, 받을 위치(메서드, 클래스)): 모든 데이터 중에서 우선순위 1순위를 불린타입으로 받아옴
+// 제네릭: <boolean>과 같이 붙여 입력될 데이터 타입을 지정
+// switchToHttp: 프로토콜을 Http로 명시
+// super => 부모인 AuthGuard 함수 호출

@@ -8,6 +8,7 @@ import { ReviewsService } from 'src/reviews/reviews.service';
 import { toReviewWithLikesDTO } from 'src/common/dto/reviews/reviews.dto';
 
 @Controller('api/users')
+@UseGuards(JwtAuthGuard)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
@@ -58,4 +59,31 @@ export class UsersController {
   // ===========================================================================
 
   // TODO: 여기에 3개의 라우트 핸들러를 구현하세요.
+
+  @Get('profile')
+  async getProfile(@JWTUser() jwt: JWTPayload): Promise<UserProfileDTO> { //Guard가 인증하고 보낸 request.user에서 JWTPayload 내용만 뽑고 UserProfileDTO로 변환
+    const user: any = await this.usersService.getUserWithDeptById(jwt.id);
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+    return toUserProfileDTO(user);
+  }
+
+  @Get('reviews')
+  async getMyReviews(@JWTUser() jwt: JWTPayload){
+    const reviews = await this.reviewsService.getReviewsOfUser(jwt.id);
+
+    return reviews.map(toReviewWithLikesDTO(jwt.id))
+  }
+
+  @Get('reviews/likes')
+  async getLikedReviews(@JWTUser() jwt: JWTPayload) {
+    const likedReviews = await this.reviewsService.getReviewsLikedByUser(jwt.id);
+
+    return likedReviews.map(toReviewWithLikesDTO(jwt.id));
+  }
+  
 }
+
+
+//커링함수: 여러개의 인자를 하나씩 받는 함수. ex) f(0)(1)(2)

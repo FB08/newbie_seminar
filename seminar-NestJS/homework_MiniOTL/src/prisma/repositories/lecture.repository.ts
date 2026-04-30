@@ -29,11 +29,25 @@ export class LectureRepository {
 
   async getLectureWithClasstimesById(id: number): Promise<LecturewithClassTimes | null> {
     // TODO: Prisma로 강의를 classTimes include하여 조회하세요.
-    return null;
+    return await this.prisma.lecture.findUnique({
+      where: { id },
+      include: {
+        classTimes: true,
+      },
+    });
   }
 
   async updateLectureStats(data: LectureStatUpdateInput) {
     // TODO: Prisma의 increment를 사용하여 통계를 업데이트하세요.
-    return {} as any;
+    return await this.prisma.lecture.update({
+      where: { id: data.lectureId },
+      data: {
+        // 기존 값에 전달받은 차이만큼 더하거나 뺍니다.
+        sumGrade: { increment: data.gradeChange },
+        sumLoad: { increment: data.loadChange },
+        sumSpeech: { increment: data.speechChange },
+        reviewCount: { increment: data.reviewCountChange },
+      },
+    });
   }
 }

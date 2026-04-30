@@ -1,6 +1,7 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext, UseGuards } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JWTPayload } from 'src/common/dto/auth/auth.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 // =============================================================================
 // TODO 11: AdminGuard - 관리자 권한 검사 Guard 구현하기
@@ -25,6 +26,8 @@ import { JWTPayload } from 'src/common/dto/auth/auth.dto';
 export class AdminGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
     // TODO: 요청의 user에서 isAdmin 여부를 확인하여 반환하세요.
-    return false;
+    const request = context.switchToHttp().getRequest();
+    const user = request.user;
+    return !!user?.isAdmin
   }
 }

@@ -70,7 +70,7 @@ export class AuthService {
     // TODO: 여기에 사용자 인증 로직을 구현하세요.
     try {
       const user = await this.usersService.getByEmail(email);
-      if (bcrypt.compare(password, user.encryptedPassword)){
+      if (await bcrypt.compare(password, user.encryptedPassword)){
         return user;
       }
       return null

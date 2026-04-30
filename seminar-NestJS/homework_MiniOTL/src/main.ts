@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import * as cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -23,8 +23,19 @@ import { requestLogMiddlware } from './requestLog.middleware';
 
 async function bootstrap() {
   // TODO: NestJS 앱을 생성하고 미들웨어/파이프를 설정하세요.
+
   const app = await NestFactory.create(AppModule);
   // TODO: cookieParser, ValidationPipe, 조건부 requestLogMiddlware를 등록하세요.
+  app.use(cookieParser());
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true, // DTO에 없는 속성은 거름 (선택 사항이지만 권장)
+    }),)
+  const configService = app.get(ConfigService);
+  if (configService.get<string>('LOG_REQUESTS') === 'true') {
+    app.use(requestLogMiddlware);
+  }
   await app.listen(3000);
 }
 bootstrap();

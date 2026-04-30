@@ -60,30 +60,40 @@ export class UsersService {
 
   async createUser(data: CreateUserDTO) {
     // TODO: 이메일 중복 확인 후 비밀번호를 해싱하여 사용자를 생성하세요.
-    return {} as any;
+    if (await this.userRepository.getByEmail(data.email)) throw new ConflictException('Email already exists');
+    const { password, ...rest } = data;
+    const hashed_password = await bcrypt.hash(password, this.configService.get('BCRYPT_SALT_ROUNDS') ?? DEFAULT_SALT_ROUNDS);
+    return await this.userRepository.create({ ...rest, encryptedPassword: hashed_password });
   }
 
   async updateRefreshToken(userId: number, refreshToken: string) {
     // TODO: 사용자의 Refresh Token을 DB에 저장하세요.
+    return await this.userRepository.updateRefreshToken(userId, refreshToken);
   }
 
   async getUserById(id: number) {
     // TODO: ID로 사용자를 조회하세요. 없으면 NotFoundException을 throw하세요.
-    throw new NotFoundException('User not found');
+    const user = await this.userRepository.getById(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
   async getUserWithDeptById(id: number) {
     // TODO: ID로 사용자를 학과 정보 포함 조회하세요. 없으면 NotFoundException을 throw하세요.
-    throw new NotFoundException('User not found');
+    const user = await this.userRepository.getUserWithDeptById(id);
+    if (!user) throw new NotFoundException('User not found');
+    return user;
   }
 
   async getByEmail(email: string) {
     // TODO: 이메일로 사용자를 조회하세요. 없으면 NotFoundException을 throw하세요.
-    throw new NotFoundException('User not found');
+    const user = await this.userRepository.getByEmail(email);
+    if (user === null) throw new NotFoundException('User not found');
   }
 
   async toggleAdmin(id: number) {
     // TODO: 사용자의 관리자 권한을 토글하세요.
-    return {} as any;
+    const user = await this.getUserById(id);
+    return await this.userRepository.setAdmin(id, !user?.isAdmin);
   }
 }

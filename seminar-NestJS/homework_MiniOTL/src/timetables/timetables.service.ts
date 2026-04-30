@@ -72,16 +72,50 @@ export class TimetablesService {
   // ===========================================================================
   async addLectureToTimetableForUser(userId: number, timetableId: number, lectureId: number) {
     // TODO: 여기에 시간표에 강의 추가 로직을 구현하세요.
+
+    // 데이터 불러오기
+    const [timetable, lecture] = await Promise.all([
+      this.timetableRepository.getTimetableWithLectureTimesById(timetableId), 
+      this.lecturesService.getLectureWithClasstimesById(lectureId)]);
+    
+    if (!timetable || timetable.userId != userId){
+      throw new NotFoundException('Timetable is not found');
+    }
+
+    if (timetable.year !== lecture.year || timetable.season !== lecture.season){
+      throw new BadRequestException('Can only add lectures on same semester to timetable');
+    }
+
+    if (timetable.lectures.some(l => l.id === lectureId)){
+      throw new BadRequestException('Lecture already in timetable');
+    }
+
+    if (this.checkLectureTimeConflict(lecture, timetable)){
+      throw new BadRequestException('Lecture time conflict');
+    }
+
+    return this.timetableRepository.addLectureToTimetable(timetableId, lectureId)
+
+
   }
 
   private checkLectureTimeConflict(lecture: LecturewithClassTimes, timetable: TimetableWithLectureTimes) {
     // TODO: 여기에 시간 충돌 검사 로직을 구현하세요.
+    // return table.lectures.some(exist_lecture => exist_lecture.classTimes.some(exist_lecture_time => lecture.classTimes.some(new_lecture_time => this.checkClasstimeOverlap(exist_lecture_time, new_lecture_time))))
+    for (const exist_lecture of timetable.lectures){
+      for (const exsit_lecture_time of exist_lecture.classTimes){
+        for (const new_lecture_time of lecture.classTimes){
+          if (this.checkClasstimeOverlap(exsit_lecture_time, new_lecture_time)) return true;
+        }
+      }
+    }
     return false;
   }
 
   private checkClasstimeOverlap(a: ClassTime, b: ClassTime) {
     // TODO: 여기에 두 수업 시간 겹침 판단 로직을 구현하세요.
-    return false;
+    if (a.day !== b.day) return false;
+    return (a.startTime < b.endTime && a.endTime > b.startTime)
   }
 
   async removeLectureFromTimetableForUser(userId: number, timetableId: number, lectureId: number) {

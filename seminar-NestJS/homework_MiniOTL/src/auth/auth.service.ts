@@ -5,6 +5,7 @@ import { JWTPayload, TokenAndCookieOptions, TokenRefreshPayload, toJWTPayload } 
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RefreshTokenInvalidException } from './refresh.exception';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -65,23 +66,56 @@ export class AuthService {
   // 힌트: bcrypt는 이미 import되어 있습니다 (import * as bcrypt from 'bcrypt')
   //       toJWTPayload, TokenAndCookieOptions, TokenRefreshPayload는 auth.dto에서 import됩니다
   // ===========================================================================
-  async validateUser(email: string, password: string) {
+  async validateUser(email: string, password: string): Promise<User | null> {
     // TODO: 여기에 사용자 인증 로직을 구현하세요.
-    return null;
+    try {
+      const user = await this.usersService.getByEmail(email);
+      if (await bcrypt.compare(password, user.encryptedPassword)){
+        return user;
+      }
+      return null
+    } catch (error) {
+      return null;
+    }
   }
 
   async validateRefreshAndGenerateAccessToken(userId: number, refreshToken: string): Promise<TokenRefreshPayload> {
     // TODO: 여기에 Refresh 토큰 검증 및 Access 토큰 재발급 로직을 구현하세요.
-    throw new RefreshTokenInvalidException();
+    const user = await this.usersService.getUserById(userId);
+
+    if (!user || user.refreshToken !== refreshToken ){
+      throw new RefreshTokenInvalidException();
+    }
+
+    const payload: JWTPayload = { id: userId, isAdmin: user.isAdmin }
+
+    return {
+      ...payload,
+      access: this.getAccessTokenAndOptions(payload)
+    };
   }
 
   getAccessTokenAndOptions(payload: JWTPayload): TokenAndCookieOptions {
     // TODO: 여기에 Access 토큰 생성 및 쿠키 옵션 반환 로직을 구현하세요.
-    return { token: '', options: { domain: 'localhost', path: '/', httpOnly: true, maxAge: 0 } };
+    const secret = this.configService.get<string>('JWT_ACCESS_TOKEN_SECRET');
+    const expiresInSec = this.configService.get<number>('JWT_ACCESS_TOKEN_EXP_SEC');
+
+    const token = this.jwtService.sign(toJWTPayload(payload), {
+      secret,
+      expiresInSec: `${expiresInSec}s`
+    });
+    return { token, options: { domain: 'localhost', path: '/', httpOnly: true, maxAge: Number(expiresInSec)*1000 } };
   }
 
   getRefreshTokenAndOptions(payload: JWTPayload): TokenAndCookieOptions {
     // TODO: 여기에 Refresh 토큰 생성 및 쿠키 옵션 반환 로직을 구현하세요.
-    return { token: '', options: { domain: 'localhost', path: '/', httpOnly: true, maxAge: 0 } };
+    const secret = this.configService.get<string>('JWT_REFRESH_TOKEN_SECRET');
+    const expiresInSec = this.configService.get<number>('JWT_REFRESH_TOKEN_EXP_SEC');
+
+    const token = this.jwtService.sign(toJWTPayload(payload), {
+      secret,
+      expiresInSec: `${expiresInSec}s`
+    });
+    return { token, options: { domain: 'localhost', path: '/', httpOnly: true, maxAge: Number(expiresInSec)*1000 } };
   }
 }

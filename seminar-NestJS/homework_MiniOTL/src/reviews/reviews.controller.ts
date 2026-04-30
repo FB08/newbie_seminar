@@ -52,4 +52,28 @@ export class ReviewsController {
   // ===========================================================================
 
   // TODO: 여기에 likeReview, unlikeReview, createReport 엔드포인트를 구현하세요.
+  @Post(':reviewId/likes')
+  @UseGuards(JwtAuthGuard)
+  async likeReview(@JWTUser() user: JWTPayload, @Param('reviewId') reviewId: number) {
+    const result = await this.reviewsService.likeReview(reviewId, user.id);
+    return toReviewWithLikesDTO(user.id)(result);
+  }
+
+  @Delete(':reviewId/likes')
+  @UseGuards(JwtAuthGuard)
+  async unlikeReview(@JWTUser() user: JWTPayload,@Param('reviewId') reviewId: number) {
+    const result = await this.reviewsService.unlikeReview(reviewId, user.id);
+    return toReviewWithLikesDTO(user.id)(result);
+  }
+
+  @Post(':reviewId/report')
+  @UseGuards(JwtAuthGuard)
+  async createReport(@JWTUser() user: JWTPayload, @Param('reviewId') reviewId: number, @Body() data: ReportCreateBodyDTO) {
+    const report = await this.reportService.createReport({
+      userId: user.id,
+      reviewId,
+      ...data,
+    });
+    return toReportDTO(report);
+  }
 }
